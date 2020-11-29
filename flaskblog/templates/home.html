@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block content %}
+        {% if current_user.is_authenticated%}
+          {% if app %}
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">App Name</th>
+                  <th scope="col">Date Posted</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Delete</th>
+                </tr>
+              </thead>
+              <tbody>            
+                {% for app in app %}
+                  <tr>
+                    <th scope="row">{{loop.index}}</th>
+                    <td>{{app.name}}</td>
+                    <td>{{app.date_posted.strftime('%Y-%m-%d')}}</td>
+                    <td>
+                    
+                    
+                      <form action="{{ url_for('change_status') }}" method="post"> 
+                        <div class="row">
+                          {% if app.status == True %}        
+                            <label class="switch">
+                              <input name="changed_status" type="checkbox" checked>
+                              <span class="slider round"></span>
+                            </label>                 
+                          {% else %}
+                            <label class="switch">
+                              <input name="changed_status" type="checkbox">
+                              <span class="slider round"></span>
+                            </label>  
+                          {% endif %}
+                          <input type="hidden" name="app_name" value="{{app.name}}" />
+                          <!-- <div> -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="submit" class="button"  value="Update Changes" name="submit">
+                          <!-- </div> -->
+                        </div>                          
+                      </form>              
+                    
+                    </td>
+                    <td>
+                      <form action="{{ url_for('delete_app') }}" method="post">   
+                        <input type="hidden" name="app_name" value="{{app.name}}" />
+                        <div>
+                          <input type="submit" class="button-danger"  value="Delete App" name="submit">
+                        </div>
+                      </form>   
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <br>
+            <h1 class="text-center text-danger">No App Registered</h1>
+          {% endif %}
+        {% endif %}
+{% endblock content %}
