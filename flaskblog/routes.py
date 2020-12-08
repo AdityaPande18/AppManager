@@ -28,8 +28,10 @@ api.add_resource(TodoSimple, '/check_status')
 @app.route("/")
 @app.route("/home")
 def home():
-    app = App.query.all()
-    return render_template('home.html', len= len(app),app=app)
+    if current_user.is_authenticated:
+        app = App.query.filter_by(author=current_user)
+        return render_template('home.html', app=app)
+    return render_template('home.html')
 
 
 @app.route("/about")
@@ -40,15 +42,7 @@ def about():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, password=hashed_password)
-        db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+    return render_template('closed_page.html')
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -105,6 +99,11 @@ def account():
 def new_app():
     form = AppForm()
     if form.validate_on_submit():
+        check = App.query.with_entities(App.name).filter_by(name=form.name.data, author=current_user).first()
+        print(check)
+        if check is not None:
+            flash('Can not create app of same name!!', 'danger')
+            return redirect(url_for('home'))
         app = App(name=form.name.data, status=form.status.data, author=current_user)
         db.session.add(app)
         db.session.commit()
@@ -112,21 +111,12 @@ def new_app():
         return redirect(url_for('home'))
     return render_template('create_app.html', title='New App', form=form, legend='New App')
 
-# @app.route("/post/<int:post_id>")
-# @login_required
-# def post(post_id):
-#     post = Post.query.get_or_404(post_id)
-#     return render_template('post.html', title=post.title, post=post )
 
 @app.route("/app/update", methods=['POST'])
 @login_required
 def change_status():
     app_name = request.form['app_name']
     changed_status = "changed_status" in request.form
-
-    print('-----------')
-    print(changed_status)
-    print('-----------')
 
     app = App.query.filter_by(name=app_name).update(dict(status=changed_status))
     db.session.commit()
